@@ -3,69 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interest Calculator</title>
+    <title>Quiz App</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #88ab8e;
+            color: black;
+            margin: 0;
+            padding: 0;
         }
-
+        .kk {
+            border-radius: 10px;
+            height: 25px;
+        }
+        .normal {
+            background-color: #4f6f52;
+            color: #ffffff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1.3rem;
+        }
+        .normal:hover {
+            color: rgb(27, 26, 26);
+            font-weight: bold;
+            transform: scale(1.05);
+        }
         .container {
-            width: 50%;
+            max-width: 800px;
             margin: 0 auto;
+            padding: 20px;
             text-align: center;
-            margin-top: 50px;
         }
-
-        input[type="number"] {
-            width: 100%;
-            padding: 10px;
+        h1, h2 {
+            margin-bottom: 20px;
+        }
+        input[type="text"], button {
             margin-bottom: 10px;
         }
-
-        button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
+        .option-list button {
+            display: block;
+            border-radius: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 100%;
+            text-align: left;
+        }
+        .option-list button:hover {
             cursor: pointer;
         }
-
-        button:hover {
-            background-color: #0056b3;
+        #result {
+            margin-top: 20px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Interest Calculator</h1>
-        <form id="interestForm">
-            <label for="principal">Principal Amount:</label>
-            <input type="number" id="principal" name="principal" required><br>
-
-            <label for="rate">Interest Rate (in %):</label>
-            <input type="number" id="rate" name="rate" step="0.01" required><br>
-
-            <label for="time">Time (in years):</label>
-            <input type="number" id="time" name="time" required><br>
-
-            <button type="button" onclick="calculate()">Calculate</button>
-        </form>
-
-        <div id="result"></div>
+        <div id="frontPage">
+            <h1>Welcome to Quiz App</h1>
+            <input type="text" class="kk" id="playerName" placeholder="Enter your name">
+            <br>
+            <button class="normal" id="startQuizBtn">Start Quiz</button>
+        </div>
+        <div id="quiz" style="display: none;">
+            <h2 id="userName"></h2>
+            <div id="question" class="kk"></div>
+            <div id="options" class="option-list"></div>
+            <button class="normal" id="submitBtn">Next</button>
+        </div>
+        <div id="result" style="display: none;">
+            <h2>Quiz Result</h2>
+            <p id="score"></p>
+            <p id="congratsMsg"></p>
+            <button class="normal" id="resetBtn">Reset</button>
+        </div>
     </div>
-
     <script>
-        function calculate() {
-            var principal = parseFloat(document.getElementById('principal').value);
-            var rate = parseFloat(document.getElementById('rate').value);
-            var time = parseFloat(document.getElementById('time').value);
+        const quizData = [
+            {
+                question: "What is the capital of Japan?",
+                options: ["Tokyo", "Seoul", "Beijing", "Bangkok"],
+                correctAnswer: 0,
+            },
+            {
+                question: "Which programming language is often used for web development?",
+                options: ["Java", "Python", "JavaScript", "C++"],
+                correctAnswer: 2,
+            },
+            {
+                question: "Who wrote 'Romeo and Juliet'?",
+                options: ["Charles Dickens", "William Shakespeare", "Jane Austen", "Mark Twain"],
+                correctAnswer: 1,
+            },
+            {
+                question: "What is the largest ocean on Earth?",
+                options: ["Atlantic Ocean", "Indian Ocean", "Southern Ocean", "Pacific Ocean"],
+                correctAnswer: 3,
+            },
+            {
+                question: "Which planet is known as the 'Red Planet'?",
+                options: ["Earth", "Mars", "Venus", "Jupiter"],
+                correctAnswer: 1,
+            },
+            {
+                question: "What is the capital of Australia?",
+                options: ["Sydney", "Melbourne", "Canberra", "Brisbane"],
+                correctAnswer: 2,
+            },
+            {
+                question: "In which year did the Titanic sink?",
+                options: ["1905", "1912", "1920", "1931"],
+                correctAnswer: 1,
+            },
+            {
+                question: "Who painted the Mona Lisa?",
+                options: ["Vincent van Gogh", "Leonardo da Vinci", "Pablo Picasso", "Claude Monet"],
+                correctAnswer: 1,
+            },
+            {
+                question: "What is the currency of Brazil?",
+                options: ["Peso", "Euro", "Dollar", "Real"],
+                correctAnswer: 3,
+            },
+            {
+                question: "What is the largest mammal on Earth?",
+                options: ["Elephant", "Blue Whale", "Giraffe", "Hippopotamus"],
+                correctAnswer: 1,
+            },
+        ];
 
-            var interest = (principal * rate * time) / 100;
+        let currentQuestion = 0;
+        let score = 0;
+        let playerName = '';
 
-            var totalAmount = principal + interest;
+        const frontPageElement = document.getElementById('frontPage');
+        const quizElement = document.getElementById('quiz');
+        const userNameElement = document.getElementById('userName');
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const scoreElement = document.getElementById('score');
+        const congratsMsgElement = document.getElementById('congratsMsg');
 
-            document.getElementById('result').innerHTML = "Interest: " + interest.toFixed(2) + "<br>Total Amount: " + totalAmount.toFixed(2);
+        document.getElementById('startQuizBtn').addEventListener('click', () => {
+            playerName = document.getElementById('playerName').value;
+            if (playerName.trim() !== '') {
+                frontPageElement.style.display = 'none';
+                quizElement.style.display = 'block';
+                userNameElement.textContent = `Welcome ${playerName} 🎉`;
+                loadQuestion();
+            } else {
+                alert('Please enter your name to start the quiz.');
+            }
+        });
+
+        function loadQuestion() {
+            const question = quizData[currentQuestion];
+            questionElement.textContent = question.question;
+            optionsElement.innerHTML = '';
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.onclick = () => checkAnswer(index);
+                optionsElement.appendChild(button);
+            });
         }
+
+        function checkAnswer(selectedIndex) {
+            const question = quizData[currentQuestion];
+            if (selectedIndex === question.correctAnswer) {
+                score++;
+                optionsElement.children[selectedIndex].style.backgroundColor = 'green';
+            } else {
+                optionsElement.children[selectedIndex].style.backgroundColor = 'red';
+                optionsElement.children[question.correctAnswer].style.backgroundColor = 'green';
+            }
+            disableOptions();
+        }
+
+        function disableOptions() {
+            Array.from(optionsElement.children).forEach(option => {
+                option.disabled = true;
+            });
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        function showResult() {
+            quizElement.style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+            scoreElement.textContent = `Your Score: ${score}/${quizData.length}`;
+            congratsMsgElement.textContent = `Congratulations  ${playerName} on completing the Quiz,! 🎉`;
+        }
+
+        document.getElementById('submitBtn').addEventListener('click', () => {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+                resetOptions();
+                document.getElementById('submitBtn').disabled = true;
+            } else {
+                showResult();
+            }
+        });
+
+        function resetOptions() {
+            Array.from(optionsElement.children).forEach(option => {
+                option.style.backgroundColor = '';
+                option.disabled = false;
+            });
+        }
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            currentQuestion = 0;
+            score = 0;
+            playerName = '';
+            frontPageElement.style.display = 'block';
+            quizElement.style.display = 'none';
+            document.getElementById('playerName').value = '';
+            document.getElementById('result').style.display = 'none';
+            resetOptions();
+        });
+
+        loadQuestion();
     </script>
 </body>
 </html>
